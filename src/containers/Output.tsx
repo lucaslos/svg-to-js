@@ -7,7 +7,6 @@ import css from '@emotion/css';
 import Icon from 'components/Icon';
 import { centerContent } from 'style/modifiers';
 import rgba from 'utils/rgba';
-import removeUnneededQuotes from 'utils/removeUnneededQuotes';
 
 type Props = {
   output: string;
@@ -64,7 +63,8 @@ function JsonParseWithTryCatch(json: string) {
 
 const Output = ({ output, error }: Props) => {
   const [copyWarning, setCopyWarning] = useState('');
-  const cleanOutput = removeUnneededQuotes(output);
+  // const cleanOutput = removeUnneededQuotes(output);
+  const cleanOutput = output;
 
   function showCopyWarning(text: string) {
     setCopyWarning(text);
@@ -83,6 +83,20 @@ const Output = ({ output, error }: Props) => {
         },
       );
     }
+  }
+
+  function copySVG(e: React.MouseEvent<HTMLDivElement>) {
+    const svg = e.currentTarget.children[0].innerHTML;
+
+    navigator.clipboard.writeText(svg).then(
+      () => {
+        showCopyWarning('✔ Svg Copied');
+      },
+      err => {
+        console.error('Could not copy text', err);
+        showCopyWarning('Could not copy svg');
+      },
+    );
   }
 
   const parsedIcons = !!output && JsonParseWithTryCatch(`{${output}}`);
@@ -108,9 +122,9 @@ const Output = ({ output, error }: Props) => {
       </Header>
       <JsonOutput>
         {parsedIcons && (
-          <IconsPreview>
+          <IconsPreview onClick={copySVG}>
             {Object.keys(parsedIcons).map((iconName, i) => (
-              <IconWrapper key={i} title={iconName}>
+              <IconWrapper key={i} title={`${iconName}\nClick to copy svg`}>
                 <Icon iconObj={parsedIcons[iconName]} color={colorSecondary} />
               </IconWrapper>
             ))}

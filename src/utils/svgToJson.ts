@@ -1,39 +1,37 @@
 import 'lib/svgo-web';
 import { IconSet } from 'containers/App';
 import forEachMatch from 'utils/forEachMatch';
+import camelCase from 'camelcase';
 
 // eslint-disable-next-line no-undef
 const svgo = new SVGO({
   full: true,
-  plugins: [{ convertShapeToPath: true }, { mergePaths: true }],
+  plugins: [
+    { mergePaths: true },
+    { convertShapeToPath: { convertArcs: true } },
+  ],
 });
 
-type Elem = {
-  evenodd?: boolean;
+type Shape = {
   d?: string;
   [i: string]: string | number | boolean | undefined;
 };
 
 function isNumericStr(str: string) {
-  return /^\d+\.\d+$/.test(str);
+  return !Number.isNaN(parseFloat(str)) && Number.isFinite(Number(str));
 }
 
 function convertSvg(content: string) {
   // get viewBox
   const viewBox = (/viewBox="(.*?)"/g.exec(content) || [''])[1];
-  let paths: Elem[] = [];
-  const rects: Elem[] = [];
-  const circles: Elem[] = [];
+  const paths: (Shape | string)[] = [];
   let colors: string[] = [];
   let finalContent = content;
-  let colorIndex = 1;
 
   // get colors
   forEachMatch(/fill="(.+?)"/g, content, (full, color) => {
     if (color !== 'none' && !colors.includes(color)) {
-      finalContent = finalContent.replace(RegExp(color, 'g'), `${colorIndex}`);
       colors.push(color);
-      colorIndex++;
     }
   });
 
@@ -45,72 +43,42 @@ function convertSvg(content: string) {
 
   // get paths
   forEachMatch(/<path.+?\/>/g, finalContent, fullMatch => {
-    const elem: Elem = {};
+    const path: Shape = {};
 
     forEachMatch(/(\S+?)="(.+?)"/g, fullMatch, (full, prop, value) => {
-      elem[prop] = isNumericStr(value) ? Number(value) : value;
+      path[camelCase(prop)] = isNumericStr(value) ? Number(value) : value;
     });
 
-    paths.push(elem);
+    const attributes = Object.keys(path);
+
+    if (attributes.length === 1 && path.d) {
+      paths.push(path.d);
+    } else {
+      paths.push(path);
+    }
   });
 
-  paths = paths.map(elem =>
-    Object.keys(elem).reduce<Elem>((object, key) => {
-      if (['fill-rule', 'clip-rule'].includes(key)) {
-        object.evenodd = true;
-      } else {
-        object[key] = elem[key];
-      }
-
-      return object;
-    }, {}),
-  );
-
-  // get rects
-  forEachMatch(/<rect.+?\/>/g, finalContent, fullMatch => {
-    const elem: Elem = {};
-
-    forEachMatch(/(\S+?)="(.+?)"/g, fullMatch, (full, prop, value) => {
-      elem[prop] = isNumericStr(value) ? Number(value) : value;
-    });
-
-    rects.push(elem);
-  });
-
-  // get circles
-  forEachMatch(/<circle.+?\/>/g, finalContent, fullMatch => {
-    const elem: Elem = {};
-
-    forEachMatch(/(\S+?)="(.+?)"/g, fullMatch, (full, prop, value) => {
-      elem[prop] = isNumericStr(value) ? Number(value) : value;
-    });
-
-    circles.push(elem);
-  });
-
-  if (paths.length === 0 && rects.length === 0 && circles.length === 0) {
+  if (!viewBox || paths.length === 0) {
     return false;
   }
 
   return {
     viewBox,
-    ...(colors.length > 0 && { colors }),
     ...(paths.length > 0 && { paths }),
-    ...(rects.length > 0 && { rects }),
-    ...(circles.length > 0 && { circles }),
   };
 }
 
-export default async function svgToJson(
-  iconSet: IconSet,
-) {
+export default async function svgToJson(iconSet: IconSet) {
   const validIcons = iconSet.filter(icon => icon.svg !== '');
 
   if (validIcons.length === 0) {
     return '';
   }
 
-  const promises = await validIcons.map(icon => svgo.optimize(icon.svg));
+  const promises = await validIcons.map(icon =>
+    svgo.optimize(icon.svg)
+      // .then(secondPass => svgo.optimize(secondPass.data))
+  );
   const iconsSvgOutput = await Promise.all(promises);
 
   let outPut = '';
@@ -123,7 +91,11 @@ export default async function svgToJson(
       throw new Error(`${outPut} error in 🡒 "${name}"`);
     }
 
-    outPut = `${outPut}"${name}": ${JSON.stringify(convertSvg(data), null, 2)},\n`;
+    outPut = `${outPut}"${name}": ${JSON.stringify(
+      convertSvg(data),
+      null,
+      2,
+    )},\n`;
   });
 
   outPut = outPut.slice(0, -2);

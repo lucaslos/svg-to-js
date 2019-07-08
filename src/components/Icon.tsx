@@ -5,10 +5,7 @@ import { obj } from 'typings/utils';
 
 export type JsonIcon = {
   viewBox?: string;
-  paths?: obj[];
-  rects?: obj[];
-  colors?: obj[];
-  circles?: obj[];
+  paths?: (obj | string)[];
 };
 
 export type Icons = keyof typeof iconsSet;
@@ -20,17 +17,12 @@ type Icon = {
   size?: number;
 };
 
-const Icon = ({
-  name,
-  color = colorPrimary,
-  size = 24,
-  iconObj,
-}: Icon) => {
+const Icon = ({ name, color = colorPrimary, size = 24, iconObj }: Icon) => {
   if (__DEV__) {
     if (name && !iconsSet[name]) throw new Error(`Icon ${name} do not exists`);
   }
 
-  const { viewBox, paths, rects, circles, colors }: JsonIcon =
+  const { viewBox, paths }: JsonIcon =
     iconObj || (name ? iconsSet[name] : {});
 
   return (
@@ -44,16 +36,15 @@ const Icon = ({
       viewBox={viewBox}
     >
       {paths &&
-        paths.map((pathElem, i) => (
+        paths.map((attributes, i) => (
           <path
             key={i}
-            d={pathElem.d}
-            opacity={pathElem.opacity}
-            fillRule={pathElem.evenodd ? 'evenodd' : undefined}
-            clipRule={pathElem.evenodd ? 'evenodd' : undefined}
+            {...(typeof attributes === 'string'
+              ? { d: attributes }
+              : attributes
+            )}
           />
         ))}
-      {/* {rects && rects.map(rectElem => <rect />)} */}
     </svg>
   );
 };
