@@ -124,12 +124,8 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: [
-        `**/main*.js`,
-        `**/*style*.css`,
-        `**/*runtime*.js`,
-        `**/*vendors*.js`,
-        `**/npm*.js`,
-        `**/precache-manifest*.js`,
+        `**/*`,
+        '!static',
       ],
     }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
@@ -150,20 +146,19 @@ module.exports = {
         minifyURLs: true,
       },
     }),
-    new WebpackPwaManifest({
-      name: 'SVG To Js',
-      short_name: 'SVG To Js',
-      description: 'My awesome Progressive Web App!',
-      background_color: '#111',
-      fingerprints: true,
-      publicPath: path.resolve(directories.static),
-      icons: [
-        {
-          src: path.resolve('src/assets/favicon.svg'),
-          sizes: [96, 128, 192, 256, 384, 512],
-        },
-      ],
-    }),
+    // new WebpackPwaManifest({
+    //   name: 'SVG To Js',
+    //   short_name: 'SVG To Js',
+    //   description: 'My awesome Progressive Web App!',
+    //   background_color: '#111',
+    //   fingerprints: true,
+    //   icons: [
+    //     {
+    //       src: path.resolve('src/assets/favicon.svg'),
+    //       sizes: [512],
+    //     },
+    //   ],
+    // }),
     new webpack.DefinePlugin({
       __DEV__: false,
       __PROD__: true,
