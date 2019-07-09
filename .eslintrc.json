@@ -113,6 +113,7 @@
     "no-trailing-spaces": 0,
     "eol-last": 0,
     "no-confusing-arrow": 0,
+    "no-inner-declarations": 0,
 
     "import/no-extraneous-dependencies": 0,
     "import/extensions": 0,

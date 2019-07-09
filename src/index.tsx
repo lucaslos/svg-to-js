@@ -19,6 +19,17 @@ if (__PROD__) {
         });
     });
   }
+
+  // @ts-ignore
+  window.dataLayer = window.dataLayer || [];
+  // @ts-ignore
+  // eslint-disable-next-line prefer-rest-params
+  function gtag() { window.dataLayer.push(arguments); }
+  // @ts-ignore
+  gtag('js', new Date());
+
+  // @ts-ignore
+  gtag('config', 'UA-112807554-3');
 }
 
 if (module.hot) {
