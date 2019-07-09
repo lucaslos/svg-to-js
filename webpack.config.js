@@ -4,6 +4,7 @@ const workboxPlugin = require('workbox-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const WebpackPwaManifest = require('webpack-pwa-manifest');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { directories } = require('./package.json');
 
@@ -94,7 +95,9 @@ module.exports = {
           name(module) {
             // get the name. E.g. node_modules/packageName/not/this/part.js
             // or node_modules/packageName
-            const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)[1];
+            const packageName = module.context.match(
+              /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
+            )[1];
 
             // npm package names are URL-safe, but some servers don't like @ symbols
             return `npm.${packageName.replace('@', '')}`;
@@ -106,7 +109,7 @@ module.exports = {
   },
 
   // Some libraries import Node modules but don't use them in the browser.
-    // Tell Webpack to provide empty mocks for them so importing them works.
+  // Tell Webpack to provide empty mocks for them so importing them works.
   node: {
     module: 'empty',
     dgram: 'empty',
@@ -147,6 +150,20 @@ module.exports = {
         minifyURLs: true,
       },
     }),
+    new WebpackPwaManifest({
+      name: 'SVG To Js',
+      short_name: 'SVG To Js',
+      description: 'My awesome Progressive Web App!',
+      background_color: '#111',
+      fingerprints: true,
+      publicPath: path.resolve(directories.static),
+      icons: [
+        {
+          src: path.resolve('src/assets/favicon.svg'),
+          sizes: [96, 128, 192, 256, 384, 512],
+        },
+      ],
+    }),
     new webpack.DefinePlugin({
       __DEV__: false,
       __PROD__: true,
@@ -159,7 +176,9 @@ module.exports = {
       importWorkboxFrom: 'cdn',
       runtimeCaching: [
         {
-          urlPattern: new RegExp('^https://fonts.(?:googleapis|gstatic).com/(.*)'),
+          urlPattern: new RegExp(
+            '^https://fonts.(?:googleapis|gstatic).com/(.*)',
+          ),
           handler: 'CacheFirst',
           options: {
             cacheName: 'googleFonts',
