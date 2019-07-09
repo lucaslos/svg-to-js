@@ -1,4 +1,4 @@
-# [SVG TO JS](https://lucaslos.github.io/svg-to-js)
+# [SVG to JS](https://lucaslos.github.io/svg-to-js)
 
 Create optimized icons sets from svg
 
